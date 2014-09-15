@@ -1,0 +1,20 @@
+created: 20140722132925523
+creator: BJ
+modified: 20140807145609309
+modifier: BJ
+tags: $:/tags/Macro
+title: $:/__tabsheader
+type: text/vnd.tiddlywiki
+
+\define tabsheader(tabsList,default,state:"$:/state/tab",class)
+<div class="tw-tab-set $class$">
+<div class="tw-tab-buttons $class$">
+<$list filter="$tabsList$" variable="currentTab">
+<$button set="$:/state/tab<<currentTiddler>>" setTo=<<currentTab>> default="$default$" selectedClass="tw-tab-selected">
+<$macrocall $name="currentTab" $type="text/plain" $output="text/plain"/>
+</$button>
+</$list>
+</div><div class="tw-tab-divider $class$"/><div class="tw-tab-content $class$">
+</div>
+</div>
+\end

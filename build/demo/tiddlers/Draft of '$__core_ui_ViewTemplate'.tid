@@ -1,0 +1,13 @@
+created: 20140807174919870
+draft.of: $:/core/ui/ViewTemplate
+draft.title: $:/core/ui/ViewTemplate
+modified: 20140807174917872
+title: Draft of '$:/core/ui/ViewTemplate'
+type: text/vnd.tiddlywiki
+
+\define frame-classes()
+tw-tiddler-frame tw-tiddler-view-frame $(missingTiddlerClass)$ $(shadowTiddlerClass)$ $(systemTiddlerClass)$
+\end
+<$set name="storyTiddler" value=<<currentTiddler>>><$set name="tiddlerInfoState" value=<<qualify "$:/state/popup/tiddler-info">>><$tiddler tiddler=<<currentTiddler>>><div class=<<frame-classes>>><$list filter="[all[shadows+tiddlers]tag[$:/tags/ViewTemplate]!has[draft.of]]" variable="listItem"><$transclude tiddler=<<listItem>>/></$list>
+</div>
+</$tiddler></$set></$set>

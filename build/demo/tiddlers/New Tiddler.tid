@@ -1,0 +1,23 @@
+created: 20140805140359319
+modified: 20140807202031785
+title: New Tiddler
+type: text/vnd.tiddlywiki
+
+!!just show link to title here
+|<$link><span>a</span></$link>||
+<$grid prefix="MySheet" index=2 rows=1 cols=9 >
+<$link>
+
+<<currentTiddler>>
+
+</$link>
+</$grid>
+
+!!2-D Table
+
+<$grid prefix="MySheet" index=4 rows= 2 cols=2 ><$link>{{||mosaictemplate}}</$link></$grid>
+
+!!Tables  in tables
+
+|<$grid prefix="MySheet" index=1 rows=3 cols=1 ><$link>{{||$:/core/ui/ViewTemplate}}</$link></$grid>|<$grid prefix="MySheet" index=2 rows=3 cols=1 ><$link>{{||$:/core/ui/ViewTemplate}}</$link></$grid>|
+

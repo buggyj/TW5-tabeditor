@@ -1,0 +1,18 @@
+title: $:/core/ui/Edit2Template
+
+\define frame-classes()
+tc-tiddler-frame tc-tiddler-edit-frame $(missingTiddlerClass)$ $(shadowTiddlerClass)$ $(systemTiddlerClass)$
+\end
+<div class=<<frame-classes>>>
+<$set name="storyTiddler" value=<<currentTiddler>>>
+<$save>
+<$keyboard key="escape" message="tm-cancel-tiddler">
+<$keyboard key="ctrl+enter" message="tm-save-tiddler">
+<$list filter="$:/core/ui/EditTemplate/title $:/core/ui/EditTemplate/controls $:/core/ui/EditTemplate/tags $:/core/ui/EditTemplate/simpletable/body $:/core/ui/EditTemplate/type" variable="listItem">
+<$transclude tiddler=<<listItem>>/>
+</$list>
+</$keyboard>
+</$keyboard>
+</$save>
+</$set>
+</div>

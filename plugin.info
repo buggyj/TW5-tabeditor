@@ -1,0 +1,9 @@
+{
+	"title": "$:/plugins/bj/tabeditor",
+	"description": "simple table editor - depends apon saver",
+	"author": "JeffreyWilkinson",
+	"version": "0.0.0",
+	"core-version": ">=5.0.17saver",
+	"source": "private",
+	"plugin-type": "plugin"
+}

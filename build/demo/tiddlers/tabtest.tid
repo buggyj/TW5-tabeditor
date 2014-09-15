@@ -1,0 +1,6 @@
+title: tableeditor
+
+<span title="save details"><$button set="test" setTo=<<squelsh test>> class="btn-invisible">{{$:/core/images/done-button}}</$button></span>
+@@.reactive-table
+<$edit-table tiddler=test class="editable">
+@@

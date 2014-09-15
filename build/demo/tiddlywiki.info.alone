@@ -1,0 +1,13 @@
+{
+	"plugins": [
+		"bj/tabeditor"
+	],
+	"themes": [
+		"tiddlywiki/vanilla",
+		"tiddlywiki/snowwhite"
+	],
+		"doNotSave": [
+	],
+	"includeWikis": [
+	]
+}
