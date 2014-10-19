@@ -26,7 +26,7 @@ var Widget = require("$:/core/modules/widgets/widget.js").widget;
 
 var GridEditorWidget = function(parseTreeNode,options) {
 	this.initialise(parseTreeNode,options);
-	this.hack();
+	//this.hack();
 	this.addEventListeners([
 		{type: "tclip-delete-row", handler: "handledelrow"},
 		{type: "tclip-new-row", handler: "handlenewrow"}
@@ -49,10 +49,11 @@ GridEditorWidget.prototype.handledelrow = function(event) {
 	this.childbody.children.splice(this.rows,1);
 	this.delrow(row);
 	this.rows = this.rows - 1 ;
-	
+	this.saveChanges(this.squelsh(),false);
 	//this.execute();
 	return false;
 };
+/*
 GridEditorWidget.prototype.hack = function(){
 	var node=this;
 	while(node && node.parentWidget) {
@@ -63,10 +64,11 @@ GridEditorWidget.prototype.hack = function(){
 		}
 	}
 }
+*/
 GridEditorWidget.prototype.handlenewrow = function(event) {
 	this.insertItem (this.rows);
 	this.rows = this.rows + 1;
-	//this.execute();
+	this.saveChanges(this.squelsh(),false);
 	return false;
 };
 GridEditorWidget.prototype.insertItem = function(index) {
@@ -91,6 +93,8 @@ GridEditorWidget.prototype.render = function(parent,nextSibling) {
 	// Compute our attributes
 	this.computeAttributes();
 	// Execute our logic
+	this.deleted = false;
+	this.cells={};
 	this.execute();
 	// Create a root domNode to contain our widget
 	var domNode = this.create(parent,nextSibling);
@@ -109,7 +113,7 @@ GridEditorWidget.prototype.create = function(parent,nextSibling) {
 	// Create a simple div element to contain the table
 	return this.document.createElement("div");
 };
-GridEditorWidget.prototype.createfields = function() {
+GridEditorWidget.prototype.createItems = function() {
 		var tiddler = $tw.wiki.getTiddler(this.variableName);
 		var content = $tw.wiki.getTiddlerText(this.variableName);
 		var dataRow = content.split("\n");
@@ -124,16 +128,15 @@ GridEditorWidget.prototype.createfields = function() {
 					this.cols = i - 1;
 				}
 		} 
-		$tw.wiki.addTiddler(new $tw.Tiddler(tiddler.fields,updatefields));
+		this.cells=updatefields;
 };
 GridEditorWidget.prototype.delrow = function(n) {
-	// 	function findCategory (tableOfCats, category) {	
-		var tiddler = $tw.wiki.getTiddler(this.variableName);
-		var content = $tw.wiki.getTiddlerText(this.variableName);
-		var dataRow = content.split("\n");
-		var updatefields ={},delfields ={};
 
-		for (var atr in tiddler.fields){ 
+		var fields = this.cells;
+
+		var updatefields ={};
+
+		for (var atr in fields){ 
 			var cur = atr.split(":");	
 			if (cur.length == 2) {
 				if ((/^([0-9]+)$/.test(cur[0]) && (/^([0-9]+)$/.test(cur[1])))) {
@@ -142,30 +145,29 @@ GridEditorWidget.prototype.delrow = function(n) {
 					}
 					else if (cur[0]>n) {
 						var temp = cur[0]-1;
-						updatefields[temp +":"+cur[1]]=tiddler.fields[atr];
+						updatefields[temp +":"+cur[1]]=fields[atr];
 						updatefields[atr]=null;
 					}
 				}
 			}
 		}
-		$tw.wiki.addTiddler(new $tw.Tiddler(tiddler.fields,updatefields));
+		this.merge(fields,updatefields);
 };
-GridEditorWidget.prototype.delall= function(n) {
-	// 	function findCategory (tableOfCats, category) {	
-		var tiddler = $tw.wiki.getTiddler(this.variableName);
-		var content = $tw.wiki.getTiddlerText(this.variableName);
-		var dataRow = content.split("\n");
-		var updatefields ={},delfields ={};
-
-		for (var atr in tiddler.fields){ 
-			var cur = atr.split(":");	
-			if (cur.length == 2) {
-				if ((/^([0-9]+)$/.test(cur[0]) && (/^([0-9]+)$/.test(cur[1])))) {
-					updatefields[atr]=null;
-				}
+GridEditorWidget.prototype.merge = function(fields,src) {
+	for(var t in src) {
+		if(src[t] === undefined || src[t] === null) {
+			if(t in fields) {
+				delete fields[t]; 
 			}
+		} else {
+			fields[t] =  src[t];
 		}
-		$tw.wiki.addTiddler(new $tw.Tiddler(tiddler.fields,updatefields));
+	}
+}
+	
+GridEditorWidget.prototype.delall= function() {
+	this.cells={};
+
 };
 GridEditorWidget.prototype.endbutton = function(tr,row) {
 	var item ={
@@ -220,20 +222,15 @@ GridEditorWidget.prototype.newrow = function(row) {
 		var td = {type: "element",tag: "td", children:[]};
 
 		var edtextarea ={
-			type: "edit-text" ,
-			attributes: {
-				tiddler: {type: "string", value: this.variableName },
-				tag: {type: "string", value: "textarea"},
-				field: {type: "string", value: row+":"+col}
-			}
+			type: "edit-cell" ,
+			tag:  "textarea",
+			index:  row+":"+col
+
 		}
 		
 		var ed ={
-			type: "edit-text" ,
-			attributes: {
-				tiddler: {type: "string", value: this.variableName },
-				field: {type: "string", value: row+":"+col}
-			}
+			type: "edit-cell" ,
+			index: row+":"+col
 		}
 
 	if (row == 0) {
@@ -265,7 +262,7 @@ GridEditorWidget.prototype.execute = function() {
 	this.rows = parseInt(this.getAttribute("rows","5"),10);
 	this.cols = parseInt(this.getAttribute("cols","5"),10);
 	this["class"] = "reactive-table";
-	this.createfields();
+	this.createItems();
 	// Build the child widget tree
 	var table = {type: "element",tag: "table", children:[]};
 	var tbody = {type: "element",tag: "tbody", children:[]};	
@@ -322,19 +319,29 @@ function pad (x) {
 	for (var i = 0; i < x; i++) padding = padding +'|';
 	return padding;
 }
+
+GridEditorWidget.prototype.getcell = function(index, newitem) {
+	return this.cells[index]||"";
+}
+
+GridEditorWidget.prototype.setcell = function(index, newitem) {
+	this.cells[index] = newitem; 
+	this.saveChanges(this.squelsh(),false);
+}
+
 GridEditorWidget.prototype.squelsh = function() {
-	var cell=[], tiddler = this.wiki.getTiddler(this.variableName);
-	if (!tiddler) { alert("no "+ tid);return "";}
-	// convert fields into a js array
-	for (var atr in tiddler.fields){ 
+
+	var cell=[];
+
+	for (var atr in this.cells){ 
 		var cur = atr.split(":");	
 		if (cur.length == 2) {
 			if ((/^([0-9]+)$/.test(cur[0]) && (/^([0-9]+)$/.test(cur[1])))) {
 				try {	
-					cell[cur[0]][cur[1]] = tiddler.fields[atr].replace(/\n/g,"<br>").replace(/\|/g,'"""|"""');
+					cell[cur[0]][cur[1]] = this.cells[atr].replace(/\n/g,"<br>").replace(/\|/g,'"""|"""');
 				} catch(e) { 
 						cell[cur[0]]=[];
-						cell[cur[0]][cur[1]] = tiddler.fields[atr].replace(/\n/g,"<br>").replace(/\|/g,'"""|"""');
+						cell[cur[0]][cur[1]] = this.cells[atr].replace(/\n/g,"<br>").replace(/\|/g,'"""|"""');
 				}
 			}
 		}
@@ -348,9 +355,8 @@ GridEditorWidget.prototype.squelsh = function() {
 		if (!cell[i]) 	rowstrings[i] = pad(max+1);
 		else 			rowstrings[i] = '|'+cell[i].join('|')+ pad(max-cell[i].length+1); 
 	}
-	//alert(rowstrings.join());
-	this.delall();
-	return rowstrings.join('\n')+'\n';
+	
+	return rowstrings.join('\n')+'\n'; 
 }
 
 /*
@@ -403,9 +409,203 @@ GridEditorWidget.prototype.save = function(deleting) {
 	this.saveChanges(this.squelsh(),deleting);	
 };
 
-
-
 exports["edit-grid"] = GridEditorWidget;
+
+
+var MIN_TEXT_AREA_HEIGHT = 100; // Minimum height of textareas in pixels
+
+var Widget = require("$:/core/modules/widgets/widget.js").widget;
+
+var EditTextWidget = function(parseTreeNode,options) {
+	this.initialise(parseTreeNode,options);
+	var node=this;
+	while(node && node.parentWidget) {
+		node = node.parentWidget;
+		if(node.parseTreeNode.type == "edit-grid") {
+			this.root = node;
+			break;
+		}
+	}
+};
+
+/*
+Inherit from the base widget class
+*/
+EditTextWidget.prototype = new Widget();
+
+/*
+Render this widget into the DOM
+*/
+EditTextWidget.prototype.render = function(parent,nextSibling) {
+	var self = this;
+	// Save the parent dom node
+	this.parentDomNode = parent;
+	// Compute our attributes
+	this.computeAttributes();
+	// Execute our logic
+	this.execute();
+	// Create our element
+	var editInfo = this.getEditInfo();
+	var domNode = this.document.createElement(this.editTag);
+	if(this.editType) {
+		domNode.setAttribute("type",this.editType);
+	}
+	if(editInfo.value === "" && this.editPlaceholder) {
+		domNode.setAttribute("placeholder",this.editPlaceholder);
+	}
+	if(this.editSize) {
+		domNode.setAttribute("size",this.editSize);
+	}
+	// Assign classes
+	if(this.editClass) {
+		domNode.className = this.editClass;
+	}
+	// Set the text
+	if(this.editTag === "textarea") {
+		domNode.appendChild(this.document.createTextNode(editInfo.value));
+	} else {
+		domNode.value = editInfo.value;
+	}
+	// Add an input event handler
+	$tw.utils.addEventListeners(domNode,[
+		{name: "focus", handlerObject: this, handlerMethod: "handleFocusEvent"},
+		{name: "input", handlerObject: this, handlerMethod: "handleInputEvent"}
+	]);
+	// Insert the element into the DOM
+	parent.insertBefore(domNode,nextSibling);
+	this.domNodes.push(domNode);
+	if(this.postRender) {
+		this.postRender();
+	}
+	// Fix height
+	this.fixHeight();
+};
+
+/*
+Get the tiddler being edited and current value
+*/
+EditTextWidget.prototype.getEditInfo = function() {
+	// Get the edit value
+	var self = this,
+		value,
+		update;
+ 
+	value = this.root.getcell(this.editIndex);
+
+	update = function(value) {
+		self.root.setcell(self.editIndex,value)
+	};
+
+	return {value: value, update: update};
+};
+
+/*
+Compute the internal state of the widget
+*/
+EditTextWidget.prototype.execute = function() {
+	// Get our parameters
+
+	this.editIndex = this.parseTreeNode.index;
+	// Get the editor element tag and type
+	this.editTag = this.parseTreeNode.tag || "input";
+};
+
+/*
+Selectively refreshes the widget if needed. Returns true if the widget or any of its children needed re-rendering
+*/
+EditTextWidget.prototype.refresh = function(changedTiddlers) {
+	var changedAttributes = this.computeAttributes();
+	// Completely rerender if any of our attributes have changed
+	if( changedAttributes.index) {
+		this.refreshSelf();
+		return true;
+	} else { //bj maybe send the list of cells that have updated?
+		this.updateEditor(this.getEditInfo().value);
+		return true;
+	}
+	return false;
+};
+
+/*
+Update the editor with new text. This method is separate from updateEditorDomNode()
+so that subclasses can override updateEditor() and still use updateEditorDomNode()
+*/
+EditTextWidget.prototype.updateEditor = function(text) {
+	this.updateEditorDomNode(text);
+};
+
+/*
+Update the editor dom node with new text
+*/
+EditTextWidget.prototype.updateEditorDomNode = function(text) {
+	// Replace the edit value if the tiddler we're editing has changed
+	var domNode = this.domNodes[0];
+	if(!domNode.isTiddlyWikiFakeDom) {
+		if(this.document.activeElement !== domNode) {
+			domNode.value = text;
+		}
+		// Fix the height if needed
+		this.fixHeight();
+	}
+};
+
+/*
+Fix the height of textareas to fit their content
+*/
+EditTextWidget.prototype.fixHeight = function() {
+	var self = this,
+		domNode = this.domNodes[0];
+	if(domNode && !domNode.isTiddlyWikiFakeDom && this.editTag === "textarea") {
+		$tw.utils.nextTick(function() {
+			// Resize the textarea to fit its content, preserving scroll position
+			var scrollPosition = $tw.utils.getScrollPosition(),
+				scrollTop = scrollPosition.y;
+			// Set its height to auto so that it snaps to the correct height
+			domNode.style.height = "auto";
+			// Calculate the revised height
+			var newHeight = Math.max(domNode.scrollHeight + domNode.offsetHeight - domNode.clientHeight,MIN_TEXT_AREA_HEIGHT);
+			// Only try to change the height if it has changed
+			if(newHeight !== domNode.offsetHeight) {
+				domNode.style.height =  newHeight + "px";
+				// Make sure that the dimensions of the textarea are recalculated
+				$tw.utils.forceLayout(domNode);
+				// Check that the scroll position is still visible before trying to scroll back to it
+				scrollTop = Math.min(scrollTop,self.document.body.scrollHeight - window.innerHeight);
+				window.scrollTo(scrollPosition.x,scrollTop);
+			}
+		});
+	}
+};
+
+/*
+Handle a dom "input" event
+*/
+EditTextWidget.prototype.handleInputEvent = function(event) {
+	this.saveChanges(this.domNodes[0].value);
+	this.fixHeight();
+	return true;
+};
+
+EditTextWidget.prototype.handleFocusEvent = function(event) {
+	if(this.editFocusPopup) {
+		$tw.popup.triggerPopup({
+			domNode: this.domNodes[0],
+			title: this.editFocusPopup,
+			wiki: this.wiki,
+			force: true
+		});
+	}
+	return true;
+};
+
+EditTextWidget.prototype.saveChanges = function(text) {
+	var editInfo = this.getEditInfo();
+	if(text !== editInfo.value) {
+		editInfo.update(text);
+	}
+};
+
+exports["edit-cell"] = EditTextWidget;
 
 
 })();
