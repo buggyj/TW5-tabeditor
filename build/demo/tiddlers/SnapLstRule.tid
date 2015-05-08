@@ -1,0 +1,11 @@
+created: 20140901125305998
+modified: 20141019223738280
+tags: TiddlyClipConfig
+title: SnapLstRule
+type: text/grid
+
+|!Category|!Tip|!Tags|!Rule Tid|!Modes|
+|T5W Snap||clips|SnapLstRule|snap30|
+|WeB web||clips|WebLstRule||
+|WeB Snap||clips|SnapLstRule|snap30|
+|WeB Utube||clips|UtubeLstRule||
