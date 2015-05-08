@@ -1,1 +1,13 @@
-tiddlywiki.info.web
+{
+	"plugins": [
+		"bj/tableditor"
+	],
+	"themes": [
+		"tiddlywiki/vanilla",
+		"tiddlywiki/snowwhite"
+	],
+	"doNotSave": [
+	],
+	"includeWikis": [
+	]
+}

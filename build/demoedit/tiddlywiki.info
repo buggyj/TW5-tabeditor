@@ -2,10 +2,16 @@
 	"plugins": [
 		"tiddlywiki/tiddlyweb",
 		"tiddlywiki/filesystem",
-		"bj/tabeditor"
+		"bj/tableditor"
 	],
 	"themes": [
 		"tiddlywiki/vanilla",
 		"tiddlywiki/snowwhite"
-	]
+	],
+	"includeWikis": [
+		"../demo"
+	],
+	"config": {
+		"default-tiddler-location": "../demo/tiddlers"
+	}
 }
